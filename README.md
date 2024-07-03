@@ -93,7 +93,9 @@ In addition the following modifications were performed
 * Scale the data using `StandardScaler`
 * The data was randomly split into train and test sets to facilitate holdout cross-validation with a test size of 20%.
 
-At this point the train and test data has the shape `Train:((153714, 52), Test:(38429, 52))`
+At this point the train and test data has the shape 
+`Train:((153714, 52)` 
+`Test:(38429, 52))`
 
 ### Feature Engineering
 The next step was to examine the correlation matrix and heatmap. 
@@ -258,7 +260,7 @@ Looking at the visual representations and observations, here are some high level
 ## Outline of project
 
 - [Link to download data](https://www.kaggle.com/datasets/jsrojas/ip-network-traffic-flows-labeled-with-87-apps)
-- [Link to notebook]()
+- [Link to notebook](https://github.com/1kit/Berkeley-Capstone-Project/blob/main/capstone.ipynb)
 
 ## Contact and Further Information
 Venkit Kasiviswanathan
