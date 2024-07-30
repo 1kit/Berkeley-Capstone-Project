@@ -67,7 +67,7 @@ Following salient points were observed about the dataset
 </p>
 
 ### Data Preparation
-The first step was to make the data balanced with respect to top 20 applications. Based on visual inspection, a random sample of `min( 14000, count )` data from the top 20 applications were taken.
+The first step was to make the data balanced with respect to top 20 applications. Based on visual inspection, a random sample of `min( 10000, count )` data from the top 20 applications were taken.
 A new pandas data frame from the above was constructed. This led to the following bar plot
 
 <p align="left">
@@ -79,7 +79,7 @@ This looks a lot more balanced now.
 In addition the following modifications were performed
 
 * A `LabelEncoder` was used to encode the `ProtocolName` column and a new `ProtocolLabel` column was created
-* Remove the following unwanted columns
+* Remove the following unwanted columns (only retain statistically significant features)
     - Flow.ID
     - Source.IP
     - Source.Port
@@ -89,13 +89,16 @@ In addition the following modifications were performed
     - Timestamp
     - Source.Port
     - Protocol
+    - L7 Protocol
+    - Flow Duration
+
 * Removed columns that only had 0 values
 * Scale the data using `StandardScaler`
 * The data was randomly split into train and test sets to facilitate holdout cross-validation with a test size of 20%.
 
 At this point the train and test data has the shape 
-`Train:((153714, 52)` 
-`Test:(38429, 52))`
+`Train:((153714, 50)` 
+`Test:(38429, 50))`
 
 ### Feature Engineering
 The next step was to examine the correlation matrix and heatmap. 
@@ -103,11 +106,20 @@ The next step was to examine the correlation matrix and heatmap.
 <img src = images/heatmap.png width = 100%/>
 </p>
 
-A lot of features were in the approx band of +0.2 to -0.2
+#### Observation from correlation heatmap
+
+Some of the features are obviously correlated
+- For example most of the packet length related features correlate highly. This is not surprising.
+- Similarly some of the IAT values (Bwd and Flow IAT.Max) correlate highly. This is also expected.
+
+Some features are highly negatively correlated
+- One example is the ACK.Flag.Count to various packet lengths. Here also, there is no surprise, because as packet length increases, the number of acks published for each packet decreases and vice-versa. 
+
+**NOTE: Outside of the above obvious observations, there was nothing much to note.**
 
 The following two feature engineering was performed
 1. Using Pricipal Component Analysis (PCA) the dimension was reduced to 10 features
-2. Correlation based feature selection by sorting the correlation values of various features against the ProtocolLabel, the top 29 (arbitrarily chosen number) features were taken.
+2. Feature selection by sorting the values of Itner Quartile Range (IQR) for all the features. The top 30 features were taken.
 
 A training and holdout test set was obtained for both of the above feature engineering techniques.
 
@@ -120,6 +132,8 @@ The training datasets generated in the previous step was used to build models th
 4. K-Nearest Neighbors (KNN)
 5. Gaussian Naive Bayes
 6. Random Forest Classifier
+7. XGBoost Classifier
+8. Dummy Classifier
 
 ### Evaluation 
 The models evaluated were all multi-class classification algorithms. The following five common metrics are used to avaluate a built classifier for a supervised classification problem
@@ -161,7 +175,8 @@ The models evaluated were all multi-class classification algorithms. The followi
     ```
 5. Receiver Operator Characteristic (RoC) curve
 
-    This represents a tradeoff between precision and recall. We have not used this metric in this project.
+    This represents a tradeoff between precision and recall. ROC curves typically feature true positive rate (TPR) on the Y axis and false positive rate (FPR) on the X axis.
+    We have not used this metric in this project because ROC curves are typically used in binary classification, where the TPR and FPR can be defined unambiguously.
 
 ### Results
 
@@ -225,6 +240,26 @@ The models evaluated were all multi-class classification algorithms. The followi
 <img src = images/rfc-corr-t.png width = 45%/>
 </p>
 
+#### 7. XGBoost Classifier
+<p float="left">
+<img src = images/xg-pca.png width = 45%/>
+<img src = images/xg-corr.png width = 45%/>
+</p>
+<p float="left">
+<img src = images/xg-pca-t.png width = 45%/>
+<img src = images/xg-corr-t.png width = 45%/>
+</p>
+
+#### 8. Dummay Classifier
+<p float="left">
+<img src = images/dummy-pca.png width = 45%/>
+<img src = images/dummy-corr.png width = 45%/>
+</p>
+<p float="left">
+<img src = images/dummy-pca-t.png width = 45%/>
+<img src = images/dummy-corr-t.png width = 45%/>
+</p>
+
 **Lets look at the metrics visually**
 <p float="left">
 <img src = images/lr-pca-v.png width = 45%/>
@@ -239,19 +274,47 @@ The models evaluated were all multi-class classification algorithms. The followi
 <img src = images/nb-corr-v.png width = 45%/>
 <img src = images/rfc-pca-v.png width = 45%/>
 <img src = images/rfc-corr-v.png width = 45%/>
+<img src = images/xg-pca-v.png width = 45%/>
+<img src = images/xg-corr-v.png width = 45%/>
+<img src = images/dummy-pca-v.png width = 45%/>
+<img src = images/dummy-corr-v.png width = 45%/>
 </p>
 
 ## Conclusions
 Looking at the visual representations and observations, here are some high level conclusions:
 
-- In general, across all the models, the feature selection using correlation data has performed much better than the PCA mechanism
-- The best model is Gaussian Naive Bayes operating on the features that were selected using the correlation method.
-- RandomForest classifier is a close second and KNN and SVM behind.
+- In general, across all the models, the feature selection using IQR has performed much better than the PCA mechanism
+- The best models are 
+
+   1. XGBoost (Accuracy = 0.68)
+   2. Random Forest (Accuracy = 0.67)
+   
+   Both operating on the features that were selected using the IQR method.
 - DecisionTree performed very poorly.
-- Gaussian Naive Bayes was the fastest model
 - SVM was the slowest model
 
+### Interpretability
+Based on techniques like Feature Importance and SHAP (SHapley Additive exPlanations), the following features were found to be more impactful in determining the applications
+
+- Init_Win_bytes_backward
+- Init_Win_bytes_forward
+- min_seg_size_forward
+- Init_Win_bytes_forward
+- Fwd.Packet.Length.Max
+- Flow.IAT.Max
+- Flow.IAT.Mean
+
+### Business Impact
+Misclassifying applications may lead to real money loss. It is hard to quantify the amount of loss since it may involve anything ranging from not able to detect malicious packets to not providing adequate level of service level agreements to the customer. 
+To this end, reducing both False-Positives and False-Negatives are important. Hence focus should be on Accuracy. Both precision and recall needs to be maximized.
+
+The models described here could be deployed in the following types of business scenarios:
+1. Non critical
+2. Best effort 
+
 ## Future
+The best models above were still not good enough. I am sure, it can be improved with a GridSearch on parameters and some of the following:
+
 - More advanced feature selection techniques could be used in the future, like gain ration (GR) based techniques.
 - Also better cross-validation techniques (like N-fold) and Grid search could be employed to tune the model much better.
 - Optimize on Multiclass Receiver Operating Characteristics (multi-class RoC)
@@ -260,7 +323,8 @@ Looking at the visual representations and observations, here are some high level
 ## Outline of project
 
 - [Link to download data](https://www.kaggle.com/datasets/jsrojas/ip-network-traffic-flows-labeled-with-87-apps)
-- [Link to notebook](https://github.com/1kit/Berkeley-Capstone-Project/blob/main/capstone.ipynb)
+- [Link to main notebook](https://github.com/1kit/Berkeley-Capstone-Project/blob/main/capstone.ipynb)
+- [Link to EDA notebook](https://github.com/1kit/Berkeley-Capstone-Project/blob/main/EDA.ipynb)
 
 ## Contact and Further Information
 Venkit Kasiviswanathan
