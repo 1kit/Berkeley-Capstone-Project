@@ -294,6 +294,26 @@ Looking at the visual representations and observations, here are some high level
 - SVM was the slowest model
 
 ### Interpretability
+
+#### Feature Importance and SHAP - XGBoost
+<p float="left">
+<img src = images/xg-feature-importance.png width = 45%/>
+<img src = images/xg-feature-importance-gain.png width = 45%/>
+<img src = images/xg-feature-importance-cover.png width = 45%/>
+<img src = images/xg-shap.png width = 45%/>
+</p>
+
+#### Feature Importance - Random Forest
+<p float="left">
+<img src = images/rf-feature-importance.png width = 45%/>
+</p>
+
+#### Feature Importance and SHAP - Decision Tree
+<p float="left">
+<img src = images/dt-feature-importance.png width = 45%/>
+<img src = images/dt-shap.png width = 45%/>
+</p>
+
 Based on techniques like Feature Importance and SHAP (SHapley Additive exPlanations), the following features were found to be more impactful in determining the applications
 
 - Init_Win_bytes_backward
