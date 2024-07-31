@@ -9,6 +9,8 @@
 **<center>Venkit</center>**
 
 ## Business Understanding
+[Executive Summary here.](https://github.com/1kit/Berkeley-Capstone-Project/blob/main/Executive%20Summary.pdf)
+
 In network traffic classification, it is important to understand the correlation between network traffic and its causal application, protocol, or service group, for example, in facilitating lawful interception, ensuring the quality of service, preventing application choke points, and facilitating malicious behavior identification.
 Recently, the utilization of machine learning algorithms has increased in the literature to classify network traffic without the need to access packets’ port numbers or content. It extracts statistical features that represent the behavior of a specific protocol or application flows, which are used for establishing the solution. Supervised, unsupervised, and semi-supervised machine learning frameworks have shown the effectiveness of the traffic classification process, where each one of them has its own strength and weakness.
 
